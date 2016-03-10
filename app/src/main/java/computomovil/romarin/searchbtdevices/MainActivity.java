@@ -1,5 +1,6 @@
 package computomovil.romarin.searchbtdevices;
 
+import android.app.Activity;
 import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -10,13 +11,15 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import java.util.ArrayList;
 
 public class MainActivity extends ListActivity {
     private static final int REQUEST_ENABLE_BT = 1;
     BluetoothAdapter mBluetoothAdapter;
-    ArrayList mArrayAdapter;
+    ArrayList devicesStrings;
+    ArrayList<BluetoothDevice> devicesBT;
     ArrayAdapter adapter;
     BToothConnectThread btThread;
 
@@ -25,12 +28,26 @@ public class MainActivity extends ListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        mArrayAdapter = new ArrayList();
+        devicesStrings = new ArrayList();
+        devicesBT = new ArrayList<>();
 
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, mArrayAdapter);
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, devicesStrings);
         setListAdapter(adapter);
-
         checkAndTurnOnBT();
+
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int positiion, long id) {
+        unregisterReceiver(mReceiver); // Don't forget to unregister during onDestroy
+        mBluetoothAdapter.cancelDiscovery();
+
+        String deviceSelected = (String) getListAdapter().getItem(positiion);
+
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra("btDeviceSelectedAddress", devicesBT.get(devicesStrings.indexOf(deviceSelected)).getAddress());
+        setResult(Activity.RESULT_OK, returnIntent);
+        finish();
     }
 
     // Create a BroadcastReceiver for ACTION_FOUND
@@ -43,11 +60,10 @@ public class MainActivity extends ListActivity {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // Add the name and address to an array adapter to show in a ListView
                 addBTDevice(device.getName() + "::" + device.getAddress());
-                System.out.println("Dispositivo encontrado");
-                btThread = new BToothConnectThread(this.getA, device);
+                devicesBT.add(device);
                 // When discovery is finished, change the Activity title
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                if (mArrayAdapter.size() == 0) {
+                if (devicesStrings.size() == 0) {
                     addBTDevice("Ningún dispositivo encontrado");
                 }
                 unregisterReceiver(mReceiver); // Don't forget to unregister during onDestroy
@@ -57,7 +73,7 @@ public class MainActivity extends ListActivity {
     };
 
     public void searchBTDevices(View v) {
-        mArrayAdapter.clear();
+        devicesStrings.clear();
         adapter.notifyDataSetChanged();
 
         // Register the BroadcastReceiver
@@ -82,7 +98,7 @@ public class MainActivity extends ListActivity {
     }
 
     private void addBTDevice(String device) {
-        mArrayAdapter.add(device);
+        devicesStrings.add(device);
         adapter.notifyDataSetChanged();
     }
 }

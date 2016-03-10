@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -41,18 +42,29 @@ public class RemoteBluetooth extends AppCompatActivity {
 
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
                 btConnectThread = new BToothConnectThread(this, device);
-            }
-            if (resultCode == Activity.RESULT_CANCELED) {
+                btConnectThread.connectDevice();
+            } else if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
             }
         }
     }//onActivityResult
 
     public void pageUp(View v) {
-        btConnectThread.pgUp();
+        if(btConnectThread == null) {
+            Toast.makeText(getApplicationContext() , "Conecte un dispositivo!", Toast.LENGTH_SHORT).show();
+
+        } else {
+            btConnectThread.pgUp();
+
+        }
     }
 
     public void pageDown(View v) {
-        btConnectThread.pgDown();
+        if(btConnectThread == null) {
+            Toast.makeText(getApplicationContext() , "Conecte un dispositivo!", Toast.LENGTH_SHORT).show();
+        } else {
+            btConnectThread.pgDown();
+
+        }
     }
 }
